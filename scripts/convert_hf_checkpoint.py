@@ -4,6 +4,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 import json
+import os
 import re
 import shutil
 import sys
@@ -71,6 +72,13 @@ def convert_hf_checkpoint(
         "lm_head.weight": "output.weight",
     }
     bin_files = {checkpoint_dir / bin for bin in bin_index["weight_map"].values()}
+
+    # Validate paths to prevent path traversal
+    checkpoint_dir_abs = Path(os.path.abspath(checkpoint_dir))
+    for file in bin_files:
+        file_abs = Path(os.path.abspath(file))
+        if not file_abs.is_relative_to(checkpoint_dir_abs):
+            raise ValueError(f"Path traversal detected: {file}")
 
     def permute(w, n_head):
         dim = config.dim
