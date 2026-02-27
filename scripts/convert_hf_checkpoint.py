@@ -70,7 +70,16 @@ def convert_hf_checkpoint(
         "model.norm.weight": "norm.weight",
         "lm_head.weight": "output.weight",
     }
-    bin_files = {checkpoint_dir / bin for bin in bin_index["weight_map"].values()}
+
+    bin_files = set()
+    checkpoint_root = checkpoint_dir.resolve()
+    for bin_file in bin_index["weight_map"].values():
+        bin_path = (checkpoint_dir / bin_file).resolve()
+        try:
+            bin_path.relative_to(checkpoint_root)
+        except ValueError:
+            raise ValueError(f"Invalid filename '{bin_file}': Path traversal detected.")
+        bin_files.add(bin_path)
 
     def permute(w, n_head):
         dim = config.dim
