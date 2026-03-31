@@ -7,3 +7,11 @@
 **Vulnerability:** Path Traversal in `scripts/convert_hf_checkpoint.py` allows reading arbitrary files via malicious `index.json`.
 **Learning:** Model index files (like `model.safetensors.index.json`) can contain relative paths that traverse outside the checkpoint directory. Blindly trusting these paths leads to unauthorized file access.
 **Prevention:** Always validate that paths derived from external configuration files resolve to locations within the expected directory, using `path.resolve().is_relative_to()`.
+## 2025-02-18 - Path Traversal in Checkpoint Converter
+**Vulnerability:** Path Traversal in `scripts/convert_hf_checkpoint.py` allows arbitrary file access via malicious paths in `model.safetensors.index.json`.
+**Learning:** Blindly trusting paths in external configuration files can lead to path traversal if those paths are joined with a base directory without validation.
+**Prevention:** Always validate that resolved paths from external input stay within the intended directory using `path.is_relative_to(base_path)`.
+## 2025-02-18 - Path Traversal in Checkpoint Conversion
+**Vulnerability:** Path Traversal in `scripts/convert_hf_checkpoint.py` allows reading arbitrary files via malicious `weight_map` in checkpoint index files.
+**Learning:** When processing index files or manifests that reference other files, verify that all referenced paths resolve to locations within the trusted directory.
+**Prevention:** Resolve all file paths relative to the checkpoint directory. Use `os.path.abspath` instead of `resolve()` if symlinks (like Hugging Face cache) must be supported, to prevent `..` traversal while allowing valid symlinks.
