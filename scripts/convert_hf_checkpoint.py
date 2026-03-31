@@ -71,7 +71,14 @@ def convert_hf_checkpoint(
         "model.norm.weight": "norm.weight",
         "lm_head.weight": "output.weight",
     }
-    bin_files = {checkpoint_dir / bin for bin in bin_index["weight_map"].values()}
+
+    bin_files = set()
+    resolved_checkpoint_dir = checkpoint_dir.resolve()
+    for bin_file in bin_index["weight_map"].values():
+        target_path = (checkpoint_dir / bin_file).resolve()
+        if not target_path.is_relative_to(resolved_checkpoint_dir):
+            raise ValueError(f"Invalid path in model index '{bin_file}': Path traversal detected.")
+        bin_files.add(target_path)
 
     # Validate paths to prevent path traversal
     checkpoint_dir_abs = Path(os.path.abspath(checkpoint_dir))
