@@ -4,6 +4,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 import json
+import os
 import re
 import shutil
 import sys
@@ -78,6 +79,13 @@ def convert_hf_checkpoint(
         if not target_path.is_relative_to(resolved_checkpoint_dir):
             raise ValueError(f"Invalid path in model index '{bin_file}': Path traversal detected.")
         bin_files.add(target_path)
+
+    # Validate paths to prevent path traversal
+    checkpoint_dir_abs = Path(os.path.abspath(checkpoint_dir))
+    for file in bin_files:
+        file_abs = Path(os.path.abspath(file))
+        if not file_abs.is_relative_to(checkpoint_dir_abs):
+            raise ValueError(f"Path traversal detected: {file}")
 
     def permute(w, n_head):
         dim = config.dim
