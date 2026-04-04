@@ -11,9 +11,18 @@ from requests.exceptions import HTTPError
 
 def hf_download(repo_id: Optional[str] = None, hf_token: Optional[str] = None) -> None:
     from huggingface_hub import snapshot_download
-    os.makedirs(f"checkpoints/{repo_id}", exist_ok=True)
+    from pathlib import Path
+
+    os.makedirs("checkpoints", exist_ok=True)
+    checkpoint_root = Path("checkpoints").resolve()
+    target_dir = (checkpoint_root / repo_id).resolve()
+
+    if not target_dir.is_relative_to(checkpoint_root):
+        raise ValueError(f"Invalid repo_id '{repo_id}': Path traversal detected.")
+
+    os.makedirs(target_dir, exist_ok=True)
     try:
-        snapshot_download(repo_id, local_dir=f"checkpoints/{repo_id}", local_dir_use_symlinks=False, token=hf_token, ignore_patterns="*.safetensors")
+        snapshot_download(repo_id, local_dir=str(target_dir), local_dir_use_symlinks=False, token=hf_token, ignore_patterns="*.safetensors")
     except HTTPError as e:
         if e.response.status_code == 401:
             print("You need to pass a valid `--hf_token=...` to download private checkpoints.")
