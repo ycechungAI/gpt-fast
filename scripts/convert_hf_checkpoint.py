@@ -56,6 +56,13 @@ def convert_hf_checkpoint(
     with open(model_map_json) as json_map:
         bin_index = json.load(json_map)
 
+    if not isinstance(bin_index, dict):
+        raise ValueError("Invalid index file: root must be a JSON object")
+    if "weight_map" not in bin_index:
+        raise ValueError("Invalid index file: missing 'weight_map' key")
+    if not isinstance(bin_index["weight_map"], dict):
+        raise ValueError("Invalid index file: 'weight_map' must be a JSON object")
+
     weight_map = {
         "model.embed_tokens.weight": "tok_embeddings.weight",
         "model.layers.{}.self_attn.q_proj.weight": "layers.{}.attention.wq.weight",
