@@ -46,3 +46,7 @@
 **Vulnerability:** Path Traversal in `mixtral-moe/scripts/download.py` allows arbitrary file writes via `repo_id` parameter. The script used `os.makedirs(f"checkpoints/{repo_id}", exist_ok=True)` and passed `repo_id` directly to `snapshot_download`, allowing malicious repo IDs (like `../malicious`) to create directories and write files outside the intended path.
 **Learning:** Utilities that download models or data based on external identifiers must validate that the output path stays within expected boundaries.
 **Prevention:** Use `pathlib.Path.resolve()` to canonicalize paths and check that the target path is within the intended root directory via `target_path.is_relative_to(root_path)`.
+## 2024-05-28 - Unhandled Exceptions on Untrusted JSON Index Files
+**Vulnerability:** The `scripts/convert_hf_checkpoint.py` script did not validate the JSON structure of Hugging Face index files (`model.safetensors.index.json`), trusting that it contained a `weight_map` dictionary. A malformed or missing key could cause an unhandled exception.
+**Learning:** Untrusted external JSON configuration files (like model indices) must have their structural integrity validated before being accessed. Failing to do so can result in messy crashes or potential logic errors deeper in the pipeline.
+**Prevention:** Explicitly check the types and existence of necessary keys (e.g., using `isinstance(data, dict)`) right after deserializing JSON input.
