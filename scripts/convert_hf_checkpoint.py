@@ -56,6 +56,9 @@ def convert_hf_checkpoint(
     with open(model_map_json) as json_map:
         bin_index = json.load(json_map)
 
+    if not isinstance(bin_index, dict) or "weight_map" not in bin_index or not isinstance(bin_index["weight_map"], dict):
+        raise ValueError(f"Invalid schema in model index '{model_map_json}'")
+
     weight_map = {
         "model.embed_tokens.weight": "tok_embeddings.weight",
         "model.layers.{}.self_attn.q_proj.weight": "layers.{}.attention.wq.weight",
