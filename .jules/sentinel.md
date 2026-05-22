@@ -46,3 +46,8 @@
 **Vulnerability:** Path Traversal in `mixtral-moe/scripts/download.py` allows arbitrary file writes via `repo_id` parameter. The script used `os.makedirs(f"checkpoints/{repo_id}", exist_ok=True)` and passed `repo_id` directly to `snapshot_download`, allowing malicious repo IDs (like `../malicious`) to create directories and write files outside the intended path.
 **Learning:** Utilities that download models or data based on external identifiers must validate that the output path stays within expected boundaries.
 **Prevention:** Use `pathlib.Path.resolve()` to canonicalize paths and check that the target path is within the intended root directory via `target_path.is_relative_to(root_path)`.
+
+## 2024-05-24 - Schema validation in `convert_hf_checkpoint.py`
+**Vulnerability:** Loading untrusted JSON configurations without schema or type validation could result in unhandled exceptions like `TypeError` or `KeyError` when accessing expected keys or dictionaries.
+**Learning:** Checking configuration inputs for correct keys and types ensures that the application fails securely without exposing stack traces or internals to a potential attacker providing a maliciously formatted configuration index file.
+**Prevention:** Explicitly validate schema and expected data types (e.g. ensure output is a dict containing required keys) directly after parsing untrusted configurations and before using them.
