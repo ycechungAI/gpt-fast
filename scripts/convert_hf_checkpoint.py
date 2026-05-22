@@ -54,7 +54,17 @@ def convert_hf_checkpoint(
     if model_map_json is None: raise Exception("No model map found!")
 
     with open(model_map_json) as json_map:
-        bin_index = json.load(json_map)
+        try:
+            bin_index = json.load(json_map)
+        except json.JSONDecodeError:
+            raise ValueError(f"Invalid JSON in model index '{model_map_json}'")
+
+    if not isinstance(bin_index, dict):
+        raise ValueError(f"Model index '{model_map_json}' expected dictionary, got {type(bin_index)}")
+    if "weight_map" not in bin_index:
+        raise ValueError(f"Model index '{model_map_json}' missing or invalid 'weight_map'")
+    if not isinstance(bin_index["weight_map"], dict):
+        raise ValueError(f"Model index '{model_map_json}' expected 'weight_map' to be a dictionary")
 
     weight_map = {
         "model.embed_tokens.weight": "tok_embeddings.weight",
