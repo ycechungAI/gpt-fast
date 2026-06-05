@@ -46,3 +46,8 @@
 **Vulnerability:** Path Traversal in `mixtral-moe/scripts/download.py` allows arbitrary file writes via `repo_id` parameter. The script used `os.makedirs(f"checkpoints/{repo_id}", exist_ok=True)` and passed `repo_id` directly to `snapshot_download`, allowing malicious repo IDs (like `../malicious`) to create directories and write files outside the intended path.
 **Learning:** Utilities that download models or data based on external identifiers must validate that the output path stays within expected boundaries.
 **Prevention:** Use `pathlib.Path.resolve()` to canonicalize paths and check that the target path is within the intended root directory via `target_path.is_relative_to(root_path)`.
+
+## 2025-02-21 - Unhandled Exception / Missing Validation in JSON check
+**Vulnerability:** The script `scripts/convert_hf_checkpoint.py` loaded `bin_index = json.load(json_map)` and directly iterated over `bin_index["weight_map"].values()` without checking if `bin_index` was a dictionary or contained the `weight_map` key. Malformed JSON inputs could cause uncaught `KeyError` or `TypeError` exceptions.
+**Learning:** When loading untrusted JSON files, explicitly validate the schema and expected data types (e.g. dictionaries) before accessing them. Unhandled exceptions from untrusted input can be leveraged to expose internal stacktraces or cause unhandled denial of service.
+**Prevention:** Validate parsed JSON to ensure it matches the expected structure. Raise controlled errors like `ValueError("Expected a JSON dictionary")` instead of letting the script crash via internal Python exceptions.
