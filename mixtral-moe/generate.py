@@ -200,6 +200,9 @@ def main(
     encoded = encode_tokens(tokenizer, prompt, bos=True, device=device)
     prompt_length = encoded.size(0)
 
+    if prompt_length >= model.max_seq_length:
+        raise ValueError(f"Prompt length ({prompt_length}) exceeds model max sequence length ({model.max_seq_length}).")
+
     torch.manual_seed(1234)
     model_size = sum([p.numel() * p.dtype.itemsize for p in itertools.chain(model.parameters(), model.buffers())])
     if compile:
@@ -225,6 +228,9 @@ def main(
             if is_chat:
                 prompt = f"{B_INST} {prompt.strip()} {E_INST}"
             encoded = encode_tokens(tokenizer, prompt, bos=True, device=device)
+            if encoded.size(0) >= model.max_seq_length:
+                print(f"Error: Prompt length ({encoded.size(0)}) exceeds maximum sequence length ({model.max_seq_length}). Skipping.")
+                continue
 
         if interactive and i >= 0:
             buffer = []

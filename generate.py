@@ -341,6 +341,9 @@ def main(
         encoded = torch.randint(0, 1024, (prompt,), device=device, dtype=torch.int64)
     prompt_length = encoded.size(-1)
 
+    if prompt_length >= model.max_seq_length:
+        raise ValueError(f"Prompt length ({prompt_length}) exceeds model max sequence length ({model.max_seq_length}).")
+
     torch.manual_seed(1234)
     model_size, params = _get_model_size(model)
     if compile:
@@ -372,6 +375,9 @@ def main(
             if is_chat:
                 prompt = f"{B_INST} {prompt.strip()} {E_INST}"
             encoded = encode_tokens(tokenizer, prompt, bos=True, device=device)
+            if encoded.size(-1) >= model.max_seq_length:
+                print(f"Error: Prompt length ({encoded.size(-1)}) exceeds maximum sequence length ({model.max_seq_length}). Skipping.")
+                continue
 
         if interactive and i >= 0:
             buffer = []

@@ -46,3 +46,7 @@
 **Vulnerability:** Path Traversal in `mixtral-moe/scripts/download.py` allows arbitrary file writes via `repo_id` parameter. The script used `os.makedirs(f"checkpoints/{repo_id}", exist_ok=True)` and passed `repo_id` directly to `snapshot_download`, allowing malicious repo IDs (like `../malicious`) to create directories and write files outside the intended path.
 **Learning:** Utilities that download models or data based on external identifiers must validate that the output path stays within expected boundaries.
 **Prevention:** Use `pathlib.Path.resolve()` to canonicalize paths and check that the target path is within the intended root directory via `target_path.is_relative_to(root_path)`.
+## 2025-02-21 - [Input Validation and OOM Prevention]
+**Vulnerability:** The generation scripts (`generate.py` and `mixtral-moe/generate.py`) accepted prompt inputs of arbitrary lengths without validation. Excessive prompt lengths can cause CUDA Out-Of-Memory (OOM) errors and Index Out-of-Bounds errors on positional embeddings, representing a Denial-of-Service (DoS) risk.
+**Learning:** All inputs that affect memory allocation (e.g., sequence lengths, batch sizes) must be strictly validated against hardware limits and model configuration (e.g., `max_seq_length`) to ensure graceful degradation.
+**Prevention:** Always validate that sequence length is strictly within `max_seq_length`. Provide user-friendly errors in interactive modes (skip and `continue`) instead of allowing a crash, and raise early `ValueError` for programmatically passed inputs.
