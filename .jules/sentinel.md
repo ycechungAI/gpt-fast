@@ -46,3 +46,8 @@
 **Vulnerability:** Path Traversal in `mixtral-moe/scripts/download.py` allows arbitrary file writes via `repo_id` parameter. The script used `os.makedirs(f"checkpoints/{repo_id}", exist_ok=True)` and passed `repo_id` directly to `snapshot_download`, allowing malicious repo IDs (like `../malicious`) to create directories and write files outside the intended path.
 **Learning:** Utilities that download models or data based on external identifiers must validate that the output path stays within expected boundaries.
 **Prevention:** Use `pathlib.Path.resolve()` to canonicalize paths and check that the target path is within the intended root directory via `target_path.is_relative_to(root_path)`.
+
+## 2024-06-19 - Fix OOM / Index Out-Of-Bounds in generation
+**Vulnerability:** The application was not validating input prompt lengths against `model.config.block_size` in the `generate.py` and `mixtral-moe/generate.py` files. When an oversized input prompt (exceeding `model.config.block_size`) was provided, the model evaluated `self.freqs_cis[input_pos]` out of bounds because `max_seq_length` was calculated correctly as less than `T`, meaning `input_pos` values would index into `self.freqs_cis` beyond its generated length, resulting in an `IndexError`.
+**Learning:** Model components implicitly rely on strict bounds being enforced during inference initialization. An oversized prompt can easily bypass limits without explicit length checks, acting as an Out-Of-Memory (OOM) / Index Out-Of-Bounds Denial of Service (DoS) attack. Always check bounds up front for inference endpoints.
+**Prevention:** Always validate that `T = prompt.size(-1)` is strictly less than `model.config.block_size` prior to `T_new` computation and `setup_caches()` initialization.
