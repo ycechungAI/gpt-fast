@@ -170,6 +170,8 @@ def generate(
     is_speculative = draft_model is not None
     # create an empty tensor of the expected final shape and fill in the current tokens
     T = prompt.size(-1)
+    if T >= model.config.block_size:
+        raise ValueError(f"Prompt length {T} exceeds or equals the model's block size {model.config.block_size}")
     T_new = T + max_new_tokens
     if interactive:
         max_seq_length = 350
