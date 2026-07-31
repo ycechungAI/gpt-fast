@@ -171,6 +171,10 @@ def generate(
     # create an empty tensor of the expected final shape and fill in the current tokens
     T = prompt.size(-1)
     T_new = T + max_new_tokens
+
+    if T_new > model.config.block_size:
+        raise ValueError(f"Prompt length + max_new_tokens ({T_new}) exceeds model block size ({model.config.block_size})")
+
     if interactive:
         max_seq_length = 350
     else:
