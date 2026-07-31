@@ -46,3 +46,7 @@
 **Vulnerability:** Path Traversal in `mixtral-moe/scripts/download.py` allows arbitrary file writes via `repo_id` parameter. The script used `os.makedirs(f"checkpoints/{repo_id}", exist_ok=True)` and passed `repo_id` directly to `snapshot_download`, allowing malicious repo IDs (like `../malicious`) to create directories and write files outside the intended path.
 **Learning:** Utilities that download models or data based on external identifiers must validate that the output path stays within expected boundaries.
 **Prevention:** Use `pathlib.Path.resolve()` to canonicalize paths and check that the target path is within the intended root directory via `target_path.is_relative_to(root_path)`.
+## 2025-02-20 - Missing Prompt Length Validation
+**Vulnerability:** In `generate.py`, the length of the input prompt was not validated against the model's `block_size` (or `max_seq_length`) prior to generating tokens. Passing a prompt larger than the model's capacity caused Out-Of-Memory (OOM) errors and index out-of-bounds exceptions, resulting in an ungraceful crash and possible denial of service.
+**Learning:** External inputs like prompt strings or token lengths can exceed model capacity. Always validate input sizes against configuration constraints early to fail securely.
+**Prevention:** Check if the prompt size `T >= model.config.block_size` and raise a `ValueError` with a clear message before proceeding with memory allocation or inference.
